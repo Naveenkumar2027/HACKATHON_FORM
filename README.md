@@ -19,13 +19,7 @@ View your app in AI Studio: https://ai.studio/apps/73019277-a71e-4806-a0aa-aee26
 3. Run the app:
    `npm run dev`
 
-## Registration storage (MongoDB or Vercel Blob)
+## Registration storage (Vercel Blob only)
 
-Submissions use MongoDB if configured, or **Vercel Blob** as fallback. To fix `querySrv ENOTFOUND _mongodb._tcp.cluster.mongodb.net`:
-
-1. Go to [MongoDB Atlas](https://cloud.mongodb.com) and sign in (or create an account).
-2. Create a project and a **free M0 cluster** if you don’t have one.
-3. Create a **database user** (Database Access → Add New) and note the username and password.
-4. In **Network Access**, add `0.0.0.0/0`. Set `MONGODB_URI` and `MONGODB_DB_NAME` in Vercel env. Redeploy.
-
-**Option A – Vercel Blob (no MongoDB):** Vercel Dashboard → Storage → Create Blob store. Redeploy. Registrations save to Blob.
+Registrations are stored in **wiredweekend-form-blob** only. Link the **wiredweekend-form-blob** store in Vercel Dashboard → Storage.
+`BLOB_READ_WRITE_TOKEN` is auto-added when the store is linked. Files go under `wiredweekend-form/registrations/`. Redeploy after linking.
