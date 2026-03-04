@@ -21,11 +21,17 @@ interface RegistrationProps {
   onBack: () => void;
 }
 
+const USN_PREFIX = '1VA24';
+const isValidUSN = (usn: string) => usn.trim().toUpperCase().startsWith(USN_PREFIX) && usn.trim().length >= 5;
+const phoneDigitsOnly = (p: string) => p.replace(/\D/g, '');
+const isPhoneValid = (p: string) => phoneDigitsOnly(p).length === 10;
+
 const Registration: React.FC<RegistrationProps> = ({ onBack }) => {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
-  
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
   // Form State
   const [formData, setFormData] = useState({
     teamName: '',
@@ -43,18 +49,45 @@ const Registration: React.FC<RegistrationProps> = ({ onBack }) => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    if (fieldErrors[name]) setFieldErrors(prev => ({ ...prev, [name]: '' }));
   };
 
   const handleMemberChange = (index: number, field: 'name' | 'usn', value: string) => {
     const newMembers = [...formData.members];
     newMembers[index] = { ...newMembers[index], [field]: value };
     setFormData(prev => ({ ...prev, members: newMembers }));
+    const key = `member_${index}_${field}`;
+    if (fieldErrors[key]) setFieldErrors(prev => ({ ...prev, [key]: '' }));
   };
 
-  const nextStep = () => setStep(prev => Math.min(prev + 1, 3));
+  const nextStep = () => {
+    if (step === 2) {
+      const errs: Record<string, string> = {};
+      if (!isValidUSN(formData.leadUSN)) errs.leadUSN = 'USN is not valid. You are not a fourth semester student. USN must start with 1VA24.';
+      if (!isPhoneValid(formData.leadPhone)) errs.leadPhone = 'Phone number must be exactly 10 digits.';
+      if (Object.keys(errs).length > 0) {
+        setFieldErrors(errs);
+        return;
+      }
+    }
+    setFieldErrors({});
+    setStep(prev => Math.min(prev + 1, 3));
+  };
   const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
 
   const handleSubmit = async () => {
+    setFieldErrors({});
+    const errs: Record<string, string> = {};
+    if (!isValidUSN(formData.leadUSN)) errs.leadUSN = 'You are not a fourth semester student.';
+    if (!isPhoneValid(formData.leadPhone)) errs.leadPhone = 'Phone number must be exactly 10 digits.';
+    formData.members.forEach((m, i) => {
+      if (m.usn && !isValidUSN(m.usn)) errs[`member_${i}_usn`] = 'You are not a fourth semester student.';
+    });
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const base = typeof import.meta.env.VITE_API_BASE === 'string' ? import.meta.env.VITE_API_BASE : '';
@@ -71,14 +104,7 @@ const Registration: React.FC<RegistrationProps> = ({ onBack }) => {
         data = {};
       }
       if (!res.ok) {
-        const msg =
-          data.error ||
-          (res.status === 503
-            ? 'Server not configured. Add MONGODB_URI in Vercel → Project → Settings → Environment Variables.'
-            : res.status === 500
-              ? 'Server error. Check Vercel logs and ensure MONGODB_URI is set.'
-              : res.statusText || 'Registration failed');
-        throw new Error(msg);
+        throw new Error(data.error || res.statusText || 'Registration failed');
       }
       setIsRegistered(true);
     } catch (err) {
@@ -186,27 +212,35 @@ const Registration: React.FC<RegistrationProps> = ({ onBack }) => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="block text-xs uppercase tracking-widest text-white/40">USN</label>
+                    <label className="block text-xs uppercase tracking-widest text-white/40">USN (must start with 1VA24)</label>
                     <input 
                       name="leadUSN"
                       value={formData.leadUSN}
                       onChange={handleInputChange}
-                      placeholder="LEAD USN..."
-                      className="futuristic-input"
+                      placeholder="e.g. 1VA24CS001"
+                      className={`futuristic-input ${fieldErrors.leadUSN ? 'border-red-500/50' : ''}`}
                     />
+                    {fieldErrors.leadUSN && <p className="text-xs text-red-400">{fieldErrors.leadUSN}</p>}
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                    <label className="block text-xs uppercase tracking-widest text-white/40">Phone Number</label>
+                    <label className="block text-xs uppercase tracking-widest text-white/40">Phone Number (10 digits only)</label>
                     <div className="relative">
                       <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
                       <input 
                         name="leadPhone"
                         value={formData.leadPhone}
-                        onChange={handleInputChange}
-                        placeholder="LEAD PHONE..."
-                        className="futuristic-input pl-12"
+                        onChange={(e) => {
+                          const v = e.target.value.replace(/\D/g, '').slice(0, 10);
+                          setFormData(prev => ({ ...prev, leadPhone: v }));
+                          if (fieldErrors.leadPhone) setFieldErrors(prev => ({ ...prev, leadPhone: '' }));
+                        }}
+                        placeholder="10-digit mobile number"
+                        maxLength={10}
+                        inputMode="numeric"
+                        className={`futuristic-input pl-12 ${fieldErrors.leadPhone ? 'border-red-500/50' : ''}`}
                       />
                     </div>
+                    {fieldErrors.leadPhone && <p className="text-xs text-red-400">{fieldErrors.leadPhone}</p>}
                   </div>
                 </div>
               </motion.div>
@@ -220,10 +254,13 @@ const Registration: React.FC<RegistrationProps> = ({ onBack }) => {
                 exit={{ x: -20, opacity: 0 }}
                 className="space-y-8"
               >
-                <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center gap-3 mb-2">
                   <Users className="text-neon-green" />
                   <h2 className="text-2xl font-bold uppercase tracking-widest">Team Members</h2>
                 </div>
+                <p className="text-xs text-white/50 mb-4">
+                  Enter <strong className="text-white/70">full name</strong> of each team member. A person registered in one team cannot be added to another team. USN must start with 1VA24.
+                </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {formData.members.map((member, idx) => (
                     <div key={idx} className="p-6 rounded-xl bg-white/5 border border-white/10 space-y-4">
@@ -234,15 +271,18 @@ const Registration: React.FC<RegistrationProps> = ({ onBack }) => {
                       <input 
                         value={member.name}
                         onChange={(e) => handleMemberChange(idx, 'name', e.target.value)}
-                        placeholder="NAME..."
+                        placeholder="Full name..."
                         className="futuristic-input text-sm"
                       />
-                      <input 
-                        value={member.usn}
-                        onChange={(e) => handleMemberChange(idx, 'usn', e.target.value)}
-                        placeholder="USN..."
-                        className="futuristic-input text-sm"
-                      />
+                      <div>
+                        <input 
+                          value={member.usn}
+                          onChange={(e) => handleMemberChange(idx, 'usn', e.target.value)}
+                          placeholder="USN (e.g. 1VA24CS002)"
+                          className={`futuristic-input text-sm ${fieldErrors[`member_${idx}_usn`] ? 'border-red-500/50' : ''}`}
+                        />
+                        {fieldErrors[`member_${idx}_usn`] && <p className="text-xs text-red-400 mt-1">{fieldErrors[`member_${idx}_usn`]}</p>}
+                      </div>
                     </div>
                   ))}
                 </div>

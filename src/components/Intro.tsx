@@ -45,7 +45,10 @@ const Intro: React.FC<IntroProps> = ({ onComplete }) => {
           style={{ clipPath: 'circle(48%)' }}
         />
         <p className="mt-6 text-[10px] font-mono tracking-[0.2em] text-white/30 uppercase">
-          THE DATASCIENCE CLUB
+          THE ROBOTICS CLUB
+        </p>
+        <p className="mt-2 text-[10px] font-mono tracking-[0.2em] text-white/40 uppercase">
+          &quot;WHERE IDEAS ARE ASSEMBLED&quot;
         </p>
       </div>
     </div>

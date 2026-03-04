@@ -21,5 +21,4 @@ View your app in AI Studio: https://ai.studio/apps/73019277-a71e-4806-a0aa-aee26
 
 ## Registration storage (Vercel Blob only)
 
-Registrations are stored in **wiredweekend-form-blob** only. Link the **wiredweekend-form-blob** store in Vercel Dashboard → Storage.
-`BLOB_READ_WRITE_TOKEN` is auto-added when the store is linked. Files go under `wiredweekend-form/registrations/`. Redeploy after linking.
+Registrations are stored in **wiredweekend-form-blob**. In Vercel: link the store (Storage) or add **BLOB_READ_WRITE_TOKEN** in Settings → Environment Variables with your blob token (paste value only, no quotes). Apply to Production and Preview, then **Redeploy**. Files go under `wiredweekend-form/registrations/`.
