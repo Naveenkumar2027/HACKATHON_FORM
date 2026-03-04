@@ -44,17 +44,6 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Global Footer Overlay */}
-      <footer className="fixed bottom-4 left-4 z-40 flex items-center gap-4 opacity-20 hover:opacity-100 transition-opacity">
-        <div className="flex flex-col font-mono">
-          <span className="text-[8px] uppercase tracking-[0.3em] font-bold">NODE_STATUS: SECURE</span>
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-neon-green animate-pulse" />
-            <span className="text-[7px] uppercase tracking-widest">UPLINK_ACTIVE // 0x7F000001</span>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
