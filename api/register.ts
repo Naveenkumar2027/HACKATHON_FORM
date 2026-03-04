@@ -1,21 +1,39 @@
 import { getDb, type RegistrationDoc } from './_db';
 
+const jsonHeaders = {
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': '*',
+};
+
 export async function POST(request: Request): Promise<Response> {
   if (request.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
-      headers: { 'Content-Type': 'application/json' },
+      headers: jsonHeaders,
     });
   }
 
   try {
-    const body = await request.json();
+    let body: Record<string, unknown>;
+    try {
+      body = (await request.json()) as Record<string, unknown>;
+    } catch {
+      return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+        status: 400,
+        headers: jsonHeaders,
+      });
+    }
     const { teamName, leadName, leadUSN, leadPhone, members } = body;
 
-    if (!teamName?.trim() || !leadName?.trim() || !leadUSN?.trim() || !leadPhone?.trim()) {
+    if (
+      !String(teamName ?? '').trim() ||
+      !String(leadName ?? '').trim() ||
+      !String(leadUSN ?? '').trim() ||
+      !String(leadPhone ?? '').trim()
+    ) {
       return new Response(
         JSON.stringify({ error: 'Missing required fields: teamName, leadName, leadUSN, leadPhone' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+        { status: 400, headers: jsonHeaders }
       );
     }
 
@@ -45,14 +63,17 @@ export async function POST(request: Request): Promise<Response> {
         id: result.insertedId.toString(),
         message: 'Registration saved',
       }),
-      { status: 201, headers: { 'Content-Type': 'application/json' } }
+      { status: 201, headers: jsonHeaders }
     );
   } catch (err) {
     console.error('Register API error:', err);
     const message = err instanceof Error ? err.message : 'Database error';
+    const isConfigError =
+      typeof message === 'string' &&
+      (message.includes('MONGODB_URI') || message.includes('placeholder') || message.includes('Atlas'));
     return new Response(JSON.stringify({ error: message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      status: isConfigError ? 503 : 500,
+      headers: jsonHeaders,
     });
   }
 }

@@ -63,8 +63,23 @@ const Registration: React.FC<RegistrationProps> = ({ onBack }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || res.statusText || 'Registration failed');
+      const text = await res.text();
+      let data: { error?: string } = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        data = {};
+      }
+      if (!res.ok) {
+        const msg =
+          data.error ||
+          (res.status === 503
+            ? 'Server not configured. Add MONGODB_URI in Vercel → Project → Settings → Environment Variables.'
+            : res.status === 500
+              ? 'Server error. Check Vercel logs and ensure MONGODB_URI is set.'
+              : res.statusText || 'Registration failed');
+        throw new Error(msg);
+      }
       setIsRegistered(true);
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Registration failed. Try again.');
