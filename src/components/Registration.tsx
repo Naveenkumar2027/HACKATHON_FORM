@@ -56,10 +56,21 @@ const Registration: React.FC<RegistrationProps> = ({ onBack }) => {
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setIsSubmitting(false);
-    setIsRegistered(true);
+    try {
+      const base = typeof import.meta.env.VITE_API_BASE === 'string' ? import.meta.env.VITE_API_BASE : '';
+      const res = await fetch(`${base}/api/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || res.statusText || 'Registration failed');
+      setIsRegistered(true);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Registration failed. Try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (isRegistered) {

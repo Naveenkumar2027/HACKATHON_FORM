@@ -35,23 +35,12 @@ const ThreeBackground: React.FC = () => {
     const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
     scene.add(particlesMesh);
 
-    // Grid
-    const gridHelper = new THREE.GridHelper(30, 60, 0x00ff41, 0x001100);
-    gridHelper.position.y = -2.5;
-    gridHelper.rotation.x = Math.PI / 2.1;
-    gridHelper.material.transparent = true;
-    gridHelper.material.opacity = 0.15;
-    scene.add(gridHelper);
-
     camera.position.z = 3;
 
     const animate = () => {
       requestAnimationFrame(animate);
       particlesMesh.rotation.y += 0.001;
       particlesMesh.rotation.x += 0.0005;
-      
-      gridHelper.position.z += 0.01;
-      if (gridHelper.position.z > 1) gridHelper.position.z = 0;
 
       renderer.render(scene, camera);
     };

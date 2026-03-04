@@ -12,7 +12,7 @@ const Landing: React.FC<LandingProps> = ({ onRegisterClick }) => {
   const taglineRef = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => {
-    const titleText = "WIRED WEEKEND";
+    const titleText = "WIRED\u00A0WEEKEND";
     let timeoutId: NodeJS.Timeout;
     
     if (titleRef.current) {
@@ -50,23 +50,21 @@ const Landing: React.FC<LandingProps> = ({ onRegisterClick }) => {
       <div className="system-activity-indicator hidden md:block" />
       
       <div className="flex flex-col items-center mb-6 md:mb-8">
-        <div className="w-24 h-24 md:w-48 md:h-48 rounded-full overflow-hidden flex items-center justify-center mb-2 md:mb-4">
-          <img 
-            src="https://storage.googleapis.com/static.miraidemo.com/user_upload/2026-03-04/1741103565551-0.9023023812845347.png" 
-            alt="Robotics Club Logo" 
-            className="w-full h-full object-cover mix-blend-screen scale-125"
-            referrerPolicy="no-referrer"
-          />
-        </div>
+        <img 
+          src="/robotics-club-logo.png" 
+          alt="Robotics Club Logo" 
+          className="w-24 h-24 md:w-48 md:h-48 object-contain mb-2 md:mb-4"
+          style={{ mixBlendMode: 'screen', clipPath: 'circle(48%)' }}
+        />
         <p className="text-neon-green font-mono text-[10px] md:text-sm tracking-[0.3em] md:tracking-[0.5em] uppercase font-bold">
-          DATASCIENCE CLUB
+          THE DATASCIENCE CLUB
         </p>
       </div>
 
       <div className="text-center mb-10 md:mb-16">
         <h1 
           ref={titleRef} 
-          className="text-4xl sm:text-6xl md:text-9xl font-bold tracking-normal neon-text uppercase font-typewriter min-h-[1.2em] leading-tight"
+          className="text-4xl sm:text-6xl md:text-9xl font-bold tracking-normal neon-text uppercase font-typewriter min-h-[1.2em] leading-tight whitespace-pre"
         >
           WIRED WEEKEND
         </h1>
