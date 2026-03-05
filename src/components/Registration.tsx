@@ -57,7 +57,12 @@ const Registration: React.FC<RegistrationProps> = ({ onBack }) => {
     newMembers[index] = { ...newMembers[index], [field]: value };
     setFormData(prev => ({ ...prev, members: newMembers }));
     const key = `member_${index}_${field}`;
-    if (fieldErrors[key]) setFieldErrors(prev => ({ ...prev, [key]: '' }));
+    setFieldErrors(prev => {
+      const next = { ...prev };
+      delete next[key];
+      delete next.teamMembers;
+      return next;
+    });
   };
 
   const nextStep = () => {
@@ -75,13 +80,26 @@ const Registration: React.FC<RegistrationProps> = ({ onBack }) => {
   };
   const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
 
+  const getFilledMemberCount = () =>
+    formData.members.filter((m) => m.name.trim() && m.usn.trim()).length;
+
   const handleSubmit = async () => {
     setFieldErrors({});
     const errs: Record<string, string> = {};
     if (!isValidUSN(formData.leadUSN)) errs.leadUSN = 'You are not a fourth semester student.';
     if (!isPhoneValid(formData.leadPhone)) errs.leadPhone = 'Phone number must be exactly 10 digits.';
+
+    // Minimum 3 members required (Team Lead + Member 2 + Member 3)
+    const filledCount = getFilledMemberCount();
+    if (filledCount < 3) {
+      errs.teamMembers = `Minimum team size is 3. Please add at least ${3 - filledCount} more member(s).`;
+    }
     formData.members.forEach((m, i) => {
       if (m.usn && !isValidUSN(m.usn)) errs[`member_${i}_usn`] = 'You are not a fourth semester student.';
+      if (i < 3) {
+        if (!m.name.trim()) errs[`member_${i}_name`] = 'Required.';
+        if (!m.usn.trim()) errs[`member_${i}_usn`] = errs[`member_${i}_usn`] || 'Required.';
+      }
     });
     if (Object.keys(errs).length > 0) {
       setFieldErrors(errs);
@@ -259,21 +277,29 @@ const Registration: React.FC<RegistrationProps> = ({ onBack }) => {
                   <h2 className="text-2xl font-bold uppercase tracking-widest">Team Members</h2>
                 </div>
                 <p className="text-xs text-white/50 mb-4">
-                  Enter <strong className="text-white/70">full name</strong> of each team member. A person registered in one team cannot be added to another team. USN must start with 1VA24.
+                  Enter <strong className="text-white/70">full name</strong> of each team member. Minimum 3, maximum 4. A person registered in one team cannot be added to another team. USN must start with 1VA24.
                 </p>
+                {fieldErrors.teamMembers && (
+                  <p className="text-xs text-red-400 mb-2">{fieldErrors.teamMembers}</p>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {formData.members.map((member, idx) => (
                     <div key={idx} className="p-6 rounded-xl bg-white/5 border border-white/10 space-y-4">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-neon-green uppercase tracking-widest">Member {idx + 1}</span>
-                        {idx < 1 && <span className="text-[10px] text-neon-violet uppercase font-bold">Required</span>}
+                        <span className="text-xs font-bold text-neon-green uppercase tracking-widest">
+                          {idx === 0 ? 'Team Lead' : `Member ${idx + 1}`}
+                        </span>
+                        {idx < 3 && <span className="text-[10px] text-neon-violet uppercase font-bold">Required</span>}
                       </div>
-                      <input 
-                        value={member.name}
-                        onChange={(e) => handleMemberChange(idx, 'name', e.target.value)}
-                        placeholder="Full name..."
-                        className="futuristic-input text-sm"
-                      />
+                      <div>
+                        <input 
+                          value={member.name}
+                          onChange={(e) => handleMemberChange(idx, 'name', e.target.value)}
+                          placeholder="Full name..."
+                          className={`futuristic-input text-sm ${fieldErrors[`member_${idx}_name`] ? 'border-red-500/50' : ''}`}
+                        />
+                        {fieldErrors[`member_${idx}_name`] && <p className="text-xs text-red-400 mt-1">{fieldErrors[`member_${idx}_name`]}</p>}
+                      </div>
                       <div>
                         <input 
                           value={member.usn}

@@ -1,7 +1,45 @@
-import React, { useEffect, useRef } from 'react';
-import { motion } from 'motion/react';
-import { createTimeline, stagger } from 'animejs';
-import { Calendar, Trophy, Users, Clock, ChevronRight } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { createTimeline } from 'animejs';
+import { Calendar, Trophy, Users, FileInput, MonitorPlay, Code, ChevronRight, type LucideIcon } from 'lucide-react';
+
+const MISSION_CARDS = [
+  {
+    id: 1,
+    title: '01_INITIATE_PROTOCOL',
+    tagline: 'Problem Statement Release',
+    icon: Calendar,
+    details: 'Friday – March 6\nTime: 1:00 PM\n\nThe official hackathon problem statement will be revealed.\nTeams begin brainstorming and forming their initial ideas.',
+  },
+  {
+    id: 2,
+    title: '02_IDEA_SUBMISSION',
+    tagline: 'Submit Your Concepts',
+    icon: FileInput,
+    details: 'Saturday – March 7\nDeadline: 9:00 PM\n\nTeams must submit their project idea before the deadline.\nAfter 9:00 PM, idea submissions will be closed.',
+  },
+  {
+    id: 3,
+    title: '03_IDEA_SHOWCASE',
+    tagline: 'Present Your Vision',
+    icon: MonitorPlay,
+    details: 'Sunday\n\nTeams present their proposed ideas to the judges.\nAfter evaluation, **10 teams will be shortlisted**.',
+  },
+  {
+    id: 4,
+    title: '04_PROTOTYPE_PHASE',
+    tagline: 'Build the Solution',
+    icon: Code,
+    details: 'Monday – 9:00 AM Start\n\nThe shortlisted teams will begin building their working prototype.\nTeams will have **48 hours to build and refine their project.**',
+  },
+  {
+    id: 5,
+    title: '05_FINAL_DEPLOYMENT',
+    tagline: 'Prototype Presentation & Winners',
+    icon: Trophy,
+    details: 'After the 48-hour build phase:\n\nShortlisted teams present their final prototype to the judges.\nFinal evaluation takes place and **winners are announced.**',
+  },
+] as const;
 
 interface LandingProps {
   onRegisterClick: () => void;
@@ -10,6 +48,7 @@ interface LandingProps {
 const Landing: React.FC<LandingProps> = ({ onRegisterClick }) => {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const taglineRef = useRef<HTMLParagraphElement>(null);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
 
   useEffect(() => {
     const titleText = "WIRED\u00A0WEEKEND";
@@ -95,22 +134,46 @@ const Landing: React.FC<LandingProps> = ({ onRegisterClick }) => {
             </p>
           </section>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-            <div className="p-6 rounded-sm bg-black/40 border border-white/5 hover:border-neon-green/30 transition-all group">
-              <Calendar className="text-neon-green mb-4 opacity-50 group-hover:opacity-100 transition-opacity" />
-              <h3 className="font-mono text-sm font-bold mb-2">01_THE_REVEAL</h3>
-              <p className="text-xs text-white/40">Friday, March 6: Problem Statement Drop & Brainstorming.</p>
-            </div>
-            <div className="p-6 rounded-sm bg-black/40 border border-white/5 hover:border-neon-green/30 transition-all group">
-              <Clock className="text-neon-green mb-4 opacity-50 group-hover:opacity-100 transition-opacity" />
-              <h3 className="font-mono text-sm font-bold mb-2">02_THE_GRIND</h3>
-              <p className="text-xs text-white/40">Sat – Sun: 48 hours to build, refine, and submit.</p>
-            </div>
-            <div className="p-6 rounded-sm bg-black/40 border border-white/5 hover:border-neon-green/30 transition-all group">
-              <Trophy className="text-neon-green mb-4 opacity-50 group-hover:opacity-100 transition-opacity" />
-              <h3 className="font-mono text-sm font-bold mb-2">03_THE_SHOWCASE</h3>
-              <p className="text-xs text-white/40">Monday, March 9: Final presentations to judges.</p>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            {MISSION_CARDS.map((card) => {
+              const Icon = card.icon;
+              const isExpanded = expandedId === card.id;
+              return (
+                <motion.div
+                  key={card.id}
+                  layout
+                  transition={{ duration: 0.35, ease: 'easeInOut' }}
+                  onClick={() => setExpandedId(isExpanded ? null : card.id)}
+                  className="p-6 rounded-sm bg-black/40 border border-white/5 hover:border-neon-green/40 hover:shadow-[0_0_20px_rgba(0,255,136,0.12)] hover:-translate-y-0.5 transition-all duration-300 group cursor-pointer overflow-hidden"
+                >
+                  <Icon className="text-neon-green mb-4 opacity-50 group-hover:opacity-100 transition-opacity" />
+                  <h3 className="font-mono text-sm font-bold mb-2">{card.title}</h3>
+                  <p className="text-xs text-white/40">{card.tagline}</p>
+                  <AnimatePresence initial={false}>
+                    {isExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.35, ease: 'easeInOut' }}
+                        className="overflow-hidden"
+                      >
+                        <div className="mt-4 pt-4 border-t border-white/10" />
+                        <p className="mt-3 text-[11px] text-white/50 leading-relaxed font-mono whitespace-pre-line">
+                          {card.details.split(/\*\*(.*?)\*\*/g).map((part, i) =>
+                            i % 2 === 1 ? (
+                              <span key={i} className="text-neon-green font-medium">{part}</span>
+                            ) : (
+                              part
+                            )
+                          )}
+                        </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              );
+            })}
           </div>
 
           <div className="flex flex-wrap gap-4 sm:gap-8 pt-6 border-t border-white/5">
@@ -118,7 +181,7 @@ const Landing: React.FC<LandingProps> = ({ onRegisterClick }) => {
               <Users className="text-neon-cyan opacity-50" />
               <div>
                 <p className="text-[10px] text-white/30 uppercase tracking-widest font-mono">Team_Size</p>
-                <p className="font-mono text-sm">2 – 4 Members</p>
+                <p className="font-mono text-sm">3 – 4 Members</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
