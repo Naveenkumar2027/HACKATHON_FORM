@@ -1,0 +1,54 @@
+{
+  "name": "Registration confirmation email",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "registration-confirmation",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-registration",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "registration-confirmation"
+    },
+    {
+      "parameters": {
+        "fromEmail": "noreply@your-domain.com",
+        "toEmail": "={{ $json.registration.leadEmail }}",
+        "subject": "Wired Weekend – Registration confirmed for {{ $json.registration.teamName }}",
+        "emailType": "text",
+        "message": "Hi {{ $json.registration.leadName }},\n\nYour team **{{ $json.registration.teamName }}** is registered for the Wired Weekend.\n\nWe'll be in touch. Welcome aboard!"
+      },
+      "id": "email-send",
+      "name": "Send Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [460, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

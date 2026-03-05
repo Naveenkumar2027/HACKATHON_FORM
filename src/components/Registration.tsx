@@ -5,6 +5,7 @@ import {
   ChevronLeft, 
   User, 
   Phone, 
+  Mail,
   Hash, 
   Users, 
   CheckCircle2, 
@@ -25,6 +26,8 @@ const USN_PREFIX = '1VA24';
 const isValidUSN = (usn: string) => usn.trim().toUpperCase().startsWith(USN_PREFIX) && usn.trim().length >= 5;
 const phoneDigitsOnly = (p: string) => p.replace(/\D/g, '');
 const isPhoneValid = (p: string) => phoneDigitsOnly(p).length === 10;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const isEmailValid = (e: string) => EMAIL_REGEX.test(String(e).trim());
 
 const Registration: React.FC<RegistrationProps> = ({ onBack }) => {
   const [step, setStep] = useState(1);
@@ -38,6 +41,7 @@ const Registration: React.FC<RegistrationProps> = ({ onBack }) => {
     leadName: '',
     leadUSN: '',
     leadPhone: '',
+    leadEmail: '',
     members: [
       { name: '', usn: '' },
       { name: '', usn: '' },
@@ -70,6 +74,8 @@ const Registration: React.FC<RegistrationProps> = ({ onBack }) => {
       const errs: Record<string, string> = {};
       if (!isValidUSN(formData.leadUSN)) errs.leadUSN = 'USN is not valid. You are not a fourth semester student. USN must start with 1VA24.';
       if (!isPhoneValid(formData.leadPhone)) errs.leadPhone = 'Phone number must be exactly 10 digits.';
+      if (!formData.leadEmail.trim()) errs.leadEmail = 'Email is required for confirmation.';
+      else if (!isEmailValid(formData.leadEmail)) errs.leadEmail = 'Enter a valid email address.';
       if (Object.keys(errs).length > 0) {
         setFieldErrors(errs);
         return;
@@ -88,6 +94,8 @@ const Registration: React.FC<RegistrationProps> = ({ onBack }) => {
     const errs: Record<string, string> = {};
     if (!isValidUSN(formData.leadUSN)) errs.leadUSN = 'You are not a fourth semester student.';
     if (!isPhoneValid(formData.leadPhone)) errs.leadPhone = 'Phone number must be exactly 10 digits.';
+    if (!formData.leadEmail.trim()) errs.leadEmail = 'Email is required for confirmation.';
+    else if (!isEmailValid(formData.leadEmail)) errs.leadEmail = 'Enter a valid email address.';
 
     // Minimum 3 members required (Team Lead + Member 2 + Member 3)
     const filledCount = getFilledMemberCount();
@@ -240,7 +248,7 @@ const Registration: React.FC<RegistrationProps> = ({ onBack }) => {
                     />
                     {fieldErrors.leadUSN && <p className="text-xs text-red-400">{fieldErrors.leadUSN}</p>}
                   </div>
-                  <div className="space-y-2 md:col-span-2">
+                  <div className="space-y-2">
                     <label className="block text-xs uppercase tracking-widest text-white/40">Phone Number (10 digits only)</label>
                     <div className="relative">
                       <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
@@ -259,6 +267,21 @@ const Registration: React.FC<RegistrationProps> = ({ onBack }) => {
                       />
                     </div>
                     {fieldErrors.leadPhone && <p className="text-xs text-red-400">{fieldErrors.leadPhone}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-xs uppercase tracking-widest text-white/40">Email (confirmation will be sent here)</label>
+                    <div className="relative">
+                      <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
+                      <input 
+                        name="leadEmail"
+                        type="email"
+                        value={formData.leadEmail}
+                        onChange={handleInputChange}
+                        placeholder="team.lead@example.com"
+                        className={`futuristic-input pl-12 ${fieldErrors.leadEmail ? 'border-red-500/50' : ''}`}
+                      />
+                    </div>
+                    {fieldErrors.leadEmail && <p className="text-xs text-red-400">{fieldErrors.leadEmail}</p>}
                   </div>
                 </div>
               </motion.div>

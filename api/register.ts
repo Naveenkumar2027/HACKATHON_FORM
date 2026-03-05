@@ -13,9 +13,15 @@ type RegistrationDoc = {
   leadName: string;
   leadUSN: string;
   leadPhone: string;
+  leadEmail: string;
   members: Array<{ name: string; usn: string }>;
   createdAt: string;
 };
+
+function isValidEmail(email: string): boolean {
+  const e = String(email).trim();
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+}
 
 function isValidUSN(usn: string): boolean {
   const u = String(usn).trim().toUpperCase();
@@ -44,16 +50,25 @@ export async function POST(request: Request): Promise<Response> {
         headers: jsonHeaders,
       });
     }
-    const { teamName, leadName, leadUSN, leadPhone, members } = body;
+    const { teamName, leadName, leadUSN, leadPhone, leadEmail, members } = body;
 
     if (
       !String(teamName ?? '').trim() ||
       !String(leadName ?? '').trim() ||
       !String(leadUSN ?? '').trim() ||
-      !String(leadPhone ?? '').trim()
+      !String(leadPhone ?? '').trim() ||
+      !String(leadEmail ?? '').trim()
     ) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: teamName, leadName, leadUSN, leadPhone' }),
+        JSON.stringify({ error: 'Missing required fields: teamName, leadName, leadUSN, leadPhone, leadEmail' }),
+        { status: 400, headers: jsonHeaders }
+      );
+    }
+
+    const emailTrimmed = String(leadEmail).trim();
+    if (!isValidEmail(emailTrimmed)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid email address.' }),
         { status: 400, headers: jsonHeaders }
       );
     }
@@ -63,6 +78,7 @@ export async function POST(request: Request): Promise<Response> {
       leadName: String(leadName).trim(),
       leadUSN: String(leadUSN).trim().toUpperCase(),
       leadPhone: normalizePhone(String(leadPhone)),
+      leadEmail: emailTrimmed,
       members: Array.isArray(members)
         ? members
             .filter((m: { name?: string; usn?: string }) => m && (m.name?.trim() || m.usn?.trim()))
@@ -164,6 +180,20 @@ export async function POST(request: Request): Promise<Response> {
       addRandomSuffix: true,
       token,
     });
+
+    // Trigger n8n webhook for confirmation email (fire-and-forget; don't block response)
+    const n8nWebhookUrl = (process.env.N8N_WEBHOOK_URL || '').trim();
+    if (n8nWebhookUrl) {
+      fetch(n8nWebhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event: 'registration.completed',
+          registration: doc,
+          blobId: blob.url?.split('/').pop() || blobPath,
+        }),
+      }).catch((err) => console.error('n8n webhook error:', err));
+    }
 
     return new Response(
       JSON.stringify({
