@@ -20,9 +20,9 @@ You already have a new workflow with a **Webhook** node. Finish it like this:
 2. **Add Email node**
    - Click the **+** on the right of the Webhook node (or press **Tab** and search “Email”).
    - Add **Send Email**. Connect it after the Webhook. Set **Credential** to **Gmail** (not SMTP). To add Gmail: **Credentials** → **Create** → **Gmail OAuth2**, then select it in the Send Email node.
-   - **To:** `{{ $json.registration.leadEmail }}`
-   - **Subject:** `Wired Weekend – Registration confirmed for {{ $json.registration.teamName }}`
-   - **Message:** use `{{ $json.registration.leadName }}`, `{{ $json.registration.teamName }}` as needed.
+   - **To:** `{{ $json.body.registration.leadEmail }}`
+   - **Subject:** `Wired Weekend – Registration confirmed for {{ $json.body.registration.teamName }}`
+   - **Message:** use `{{ $json.body.registration.leadName }}`, `{{ $json.body.registration.teamName }}` as needed.
 3. Create an email credential in n8n if you don’t have one (Credentials → Create → **Gmail OAuth2** only (do not use SMTP)).
 4. **Save** and **Activate** the workflow. (Use a **Gmail** credential in the Send Email node, not SMTP.)
 
@@ -68,9 +68,10 @@ The API sends a `POST` request with JSON body:
    - Copy the **Production Webhook URL** and set it as `N8N_WEBHOOK_URL` in Vercel.
 
 2. **Email** node — use **Gmail only** (not SMTP): select a Gmail OAuth2 credential in the node.  
-   - **To:** `{{ $json.registration.leadEmail }}`  
-   - **Subject:** e.g. `Wired Weekend – Registration confirmed for {{ $json.registration.teamName }}`  
-   - **Body:** Use `{{ $json.registration.teamName }}`, `{{ $json.registration.leadName }}`, etc.
+   - **To:** `{{ $json.body.registration.leadEmail }}`  
+   - **Subject:** e.g. `Wired Weekend – Registration confirmed for {{ $json.body.registration.teamName }}`  
+   - **Body:** Use `{{ $json.body.registration.teamName }}`, `{{ $json.body.registration.leadName }}`, etc.  
+   - **Important:** The Webhook node puts the POST body in `body`, so use `$json.body.registration.*`, not `$json.registration.*`.
 
 3. Save and activate the workflow.
 
@@ -109,9 +110,9 @@ No response from n8n is required; the API does not wait for the webhook to finis
 **Use Gmail only (not SMTP):** The Send Email node must use a **Gmail** credential. In the browser:
 1. Open your workflow in n8n → **click the second node** (“Send Email”) on the canvas so the right panel shows its settings.
 2. In the right panel, find **Credential**. If it shows an SMTP account, open the dropdown → **Create New** → **Gmail OAuth2** → sign in with the Gmail you want to send from (e.g. `roboticsclub.ds@gmail.com`) → then select that Gmail credential in the dropdown.
-3. Set **To** = `{{ $json.registration.leadEmail }}`, **Subject** = `Wired Weekend – Registration confirmed for {{ $json.registration.teamName }}`, and use `{{ $json.registration.leadName }}` / `{{ $json.registration.teamName }}` in the message. **Save** the workflow (Ctrl+S).
+3. Set **To** = `{{ $json.body.registration.leadEmail }}`, **Subject** = `Wired Weekend – Registration confirmed for {{ $json.body.registration.teamName }}`, and use `{{ $json.body.registration.leadName }}` / `{{ $json.body.registration.teamName }}` in the message. (Webhook puts the POST body in `body`.) **Save** the workflow (Ctrl+S).
 
 **Webhook returns 200 but no email / Executions show "Error":** The workflow runs but the **Send Email** node is failing. In n8n: open the workflow → **Executions** tab → click the failed run (e.g. "Error in 1.3s") → note which node is red and the error message. Common fixes:
 1. **Credential:** Send Email must have a valid **Gmail OAuth2** (or SMTP) credential selected. Create one under **Credentials** if needed.
-2. **To / Subject / Message:** Use the exact expressions from the webhook body: **To** = `{{ $json.registration.leadEmail }}`, **Subject** = `Wired Weekend – Registration confirmed for {{ $json.registration.teamName }}`, and in the message use `{{ $json.registration.leadName }}`, `{{ $json.registration.teamName }}`. If your Webhook node wraps the body (e.g. in `body`), use `$json.body.registration.leadEmail` instead of `$json.registration.leadEmail`.
+2. **To / Subject / Message:** The n8n Webhook node puts the POST JSON in `$json.body`. Use **To** = `{{ $json.body.registration.leadEmail }}`, **Subject** = `Wired Weekend – Registration confirmed for {{ $json.body.registration.teamName }}`, and in the message use `{{ $json.body.registration.leadName }}`, `{{ $json.body.registration.teamName }}`. Using `$json.registration.*` (without `body`) will not work and emails will not be sent.
 3. **Save** the workflow and run the test script again.
